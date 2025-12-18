@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>데이터 시각화의 정석: The Mondrian Edition</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <style>
+        /* 1. Reset & Global Layout */
+        :root {
+            --bg-color: #f4f4f4;
+            --primary-red: #E84A43;   /* Error/Wrong */
+            --primary-blue: #2E86DE;  /* Trust/Data */
+            --primary-yellow: #FBC531;/* Crude/Warning */
+            --line-color: #1a1a1a;
+            --text-main: #111;
+            --text-sub: #555;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: #222;
+            font-family: 'Pretendard', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Fixed 1920x1080 Container */
+        #app {
+            width: 1920px;
+            height: 1080px;
+            background-color: #fff;
+            position: relative;
+            box-shadow: 0 0 100px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* 2. Slide System (Fade Transition) */
+        .slide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            z-index: 1;
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 2;
+        }
+
+        /* 3. Mondrian Layout Structure */
+        .mondrian-grid {
+            display: grid;
+            width: 100%; height: 100%;
+            grid-template-columns: 120px 1fr 1fr 1fr 120px; /* Left Nav area reserved */
+            grid-template-rows: 150px 1fr 1fr 150px;
+            gap: 0;
+        }
+        
+        .zone {
+            border: 4px solid var(--line-color);
+            background: #fff;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        /* Colors */
+        .block-red { background-color: var(--primary-red); }
+        .block-blue { background-color: var(--primary-blue); }
+        .block-yellow { background-color: var(--primary-yellow); }
+        .block-black { background-color: var(--line-color); }
+
+        /* Typography */
+        h1 { font-size: 80px; font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 20px;}
+        h2 { font-size: 48px; font-weight: 700; margin-bottom: 30px; color: var(--text-main); }
+        h3 { font-size: 32px; font-weight: 700; margin-bottom: 20px; }
+        p.desc { font-size: 26px; font-weight: 400; line-height: 1.6; color: var(--text-sub); max-width: 800px;}
+        .highlight { color: var(--primary-red); font-weight: 700; background: linear-gradient(0deg, #ffe5e5 0%, #ffe5e5 40%, transparent 40%);}
+
+        /* 4. Navigation & UI */
+        
+        /* Left Navigation Dots */
+        .nav-left {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: #fff;
+            border-right: 4px solid var(--line-color);
+        }
+        
+        .nav-dot {
+            width: 16px; height: 16px;
+            border: 2px solid var(--line-color);
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .nav-dot.active {
+            background-color: var(--line-color);
+            transform: scale(1.4);
+        }
+
+        /* Bottom Control Buttons */
+        .btn-control {
+            position: absolute;
+            bottom: 50px;
+            width: 80px; height: 80px;
+            background: var(--line-color);
+            color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+            border: none;
+        }
+        .btn-control:hover { background: var(--primary-blue); }
+        
+        /* Position for Next/Prev */
+        .btn-next { right: 50px; }
+        .btn-prev { right: 150px; background: #555; } /* Place next to the Next button */
+        .btn-prev:hover { background: #333; }
+
+        /* Full Screen Button */
+        .btn-full {
+            position: absolute; top: 20px; right: 20px;
+            padding: 10px 20px; background: #eee; border:none; cursor:pointer; z-index: 200; font-family:'Pretendard'; font-weight:700;
+        }
+
+        /* 5. CSS Infographics */
+        
+        /* Chart Container */
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            height: 400px;
+            width: 500px;
+            border-bottom: 4px solid var(--line-color);
+            border-left: 4px solid var(--line-color);
+            padding: 0 20px;
+            position: relative;
+        }
+        .bar-group {
+            flex: 1; margin: 0 20px;
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+            height: 100%; position: relative;
+        }
+        .bar {
+            width: 100%;
+            background: var(--primary-blue);
+            transition: height 1s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.5s;
+            position: relative;
+        }
+        .bar-label { margin-top: 15px; font-size: 24px; font-weight: 700; }
+        .bar-val { 
+            position: absolute; top: -40px; 
+            font-size: 28px; font-weight: 700; color: var(--primary-red); opacity: 0; transition: 0.5s; 
+        }
+
+        /* Chart States */
+        /* Wrong (Initial) State */
+        .wrong-state .bar:nth-child(2) { height: 25%; } /* Value 1 (A) */
+        .wrong-state .bar-group:nth-child(2) .bar { height: 75%; } /* Value 3 (B) - Looks biggest */
+        .wrong-state .bar-group:nth-child(3) .bar { height: 50%; } /* Value 2 (C) - Distorted */
+
+        /* Correct (Revealed) State */
+        .correct-state .bar:nth-child(2) { height: 7.5%; background: #ccc;} /* 3/40 */
+        .correct-state .bar-group:nth-child(2) .bar { height: 12.5%; background: #ccc;} /* 5/40 */
+        .correct-state .bar-group:nth-child(3) .bar { height: 100%; background: var(--primary-red);} /* 40/40 */
+        .correct-state .bar-val { opacity: 1; }
+
+    </style>
+</head>
+<body>
+    <button class="btn-full" onclick="toggleFull()">⛶ Full Screen</button>
+
+    <div id="app">
+        <div class="nav-left">
+            <div class="nav-dot active" onclick="goToSlide(0)"></div>
+            <div class="nav-dot" onclick="goToSlide(1)"></div>
+            <div class="nav-dot" onclick="goToSlide(2)"></div>
+            <div class="nav-dot" onclick="goToSlide(3)"></div>
+            <div class="nav-dot" onclick="goToSlide(4)"></div>
+        </div>
+
+        <div class="slide active">
+            <div class="mondrian-grid">
+                <div class="zone block-red" style="grid-column: 1/2; grid-row: 1/2;"></div>
+                <div class="zone" style="grid-column: 2/5; grid-row: 1/4; border-bottom:0;">
+                    <h1>데이터 시각화:<br>예술인가, 과학인가?</h1>
+                    <p class="desc" style="margin-top:40px;">
+                        "미적으로 뛰어나지만 내용은 모호한 예술인가,<br>
+                        내용은 정확하지만 미적으로 조악한 과학인가."
+                    </p>
+                </div>
+                <div class="zone block-blue" style="grid-column: 5/6; grid-row: 3/4;"></div>
+                <div class="zone block-yellow" style="grid-column: 1/3; grid-row: 4/5;"></div>
+                <div class="zone" style="grid-column: 3/6; grid-row: 4/5; align-items: center; flex-direction: row; justify-content: space-between;">
+                    <p style="font-size: 24px; font-weight: 700;">Chapter 1. 이 책의 내용과 구성</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="mondrian-grid">
+                <div class="zone" style="grid-column: 2/6; grid-row: 1/2; border-bottom:0; border-left: 4px solid var(--line-color);">
+                    <h2>이 책의 항해 지도</h2>
+                    <p class="desc" style="font-size: 20px;">과학적 원리부터 실무 꿀팁까지, 데이터 시각화의 A to Z</p>
+                </div>
+                <div class="zone block-blue" style="grid-column: 2/3; grid-row: 2/4; color: #fff;">
+                    <span style="font-size: 80px; font-weight: 800; opacity: 0.3; position: absolute; top: 10px; left: 20px;">01</span>
+                    <h3 style="margin-top: 40px; color: #fff;">데이터와 유형</h3>
+                    <p style="font-size: 18px; margin-top: 20px; font-weight: 300; line-height: 1.5;">
+                        "과학적 원리에 중점"<br><br>• 막대, 산점도, 파이 차트<br>• 메시지 유형별 분류<br>• 통계와 변수의 이해
+                    </p>
+                </div>
+                <div class="zone" style="grid-column: 3/4; grid-row: 2/4; border-left: 0; position: relative;">
+                    <div style="position: absolute; top: 0; right: 0; width: 40px; height: 40px; background: var(--primary-yellow);"></div>
+                    <span style="font-size: 80px; font-weight: 800; opacity: 0.1; position: absolute; top: 10px; left: 20px;">02</span>
+                    <h3 style="margin-top: 40px;">그래프 디자인 원칙</h3>
+                    <p class="desc" style="font-size: 18px; margin-top: 20px;">
+                        "오해를 없애는 미적 설계"<br><br>• 색상, 기호, 글씨 크기<br>• 디자인 문제 해결<br>• 명료한 메시지 전달
+                    </p>
+                </div>
+                <div class="zone" style="grid-column: 4/5; grid-row: 2/4; border-left: 0; background: #f9f9f9;">
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 20px; background: var(--primary-red);"></div>
+                    <span style="font-size: 80px; font-weight: 800; opacity: 0.1; position: absolute; top: 10px; left: 20px;">03</span>
+                    <h3 style="margin-top: 40px;">실무 레벨업</h3>
+                    <p class="desc" style="font-size: 18px; margin-top: 20px;">
+                        • 파일 형식(JPG vs SVG)<br>• 시각화 소프트웨어<br>• 문서 맥락 배치
+                    </p>
+                </div>
+                <div class="zone block-black" style="grid-column: 2/3; grid-row: 4/5;"></div>
+                <div class="zone" style="grid-column: 3/6; grid-row: 4/5; border-left: 0; align-items: center;">
+                    <p style="font-weight: 700; color: var(--text-sub);">오늘은 이 중에서 <span style="color: var(--primary-red);">1장의 핵심 철학</span>을 중점적으로 다룹니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="mondrian-grid">
+                <div class="zone" style="grid-column: 2/6; grid-row: 1/2; border-bottom:0; border-left: 4px solid var(--line-color);">
+                    <h2>우리가 경계해야 할 3가지 함정</h2>
+                </div>
+                <div class="zone" style="grid-column: 2/3; grid-row: 2/4; background: #fff;">
+                    <div style="width:100%; height: 200px; background:repeating-linear-gradient(45deg, #FBC531, #FBC531 10px, #e1b12c 10px, #e1b12c 20px); border:2px solid #000; display:flex; justify-content:center; align-items:center;">
+                        <span style="background:#fff; padding:5px 10px; font-weight:700;">Bad Design</span>
+                    </div>
+                    <h3 style="margin-top:20px;">1. 조악함</h3>
+                    <p class="desc" style="font-size:18px; margin-top:10px;">내용은 맞지만 매력이 없음.<br>눈에 잘 들어오지 않는다.</p>
+                </div>
+                <div class="zone" style="grid-column: 3/4; grid-row: 2/4; border-left:0;">
+                    <div style="width:100%; height: 200px; position:relative; border:2px solid #000;">
+                        <div style="position:absolute; bottom:0; left:10%; width:30%; height:50%; background:#ccc;"></div>
+                        <div style="position:absolute; bottom:0; right:10%; width:30%; height:55%; background:#bbb;"></div>
+                        <div style="position:absolute; top:40%; left:30%; font-weight:700; color:red;">???</div>
+                    </div>
+                    <h3 style="margin-top:20px;">2. 모호함</h3>
+                    <p class="desc" style="font-size:18px; margin-top:10px;">정보를 오도하거나 헷갈림.<br>인지 능력을 방해한다.</p>
+                </div>
+                <div class="zone" style="grid-column: 4/5; grid-row: 2/4; border-left:0;">
+                    <div style="width:100%; height: 200px; border:2px solid #000; display:flex; align-items:flex-end; padding:10px; gap:10px;">
+                        <div style="flex:1; height:80%; background:var(--primary-red);"></div>
+                        <div style="flex:1; height:20%; background:var(--primary-red);"></div>
+                    </div>
+                    <h3 style="margin-top:20px; color:var(--primary-red);">3. 틀림</h3>
+                    <p class="desc" style="font-size:18px; margin-top:10px;">수학적 오류가 있는 상태.<br>객관적인 사실이 아니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+             <div class="mondrian-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="zone" style="grid-column: 1/2; grid-row: 1/5; justify-content: center; padding-left: 140px;">
+                    <h2 style="color:var(--primary-red);">Question:</h2>
+                    <h1>이 차트의<br>치명적 오류는?</h1>
+                    <p class="desc" style="margin-top:30px;">
+                        화면에 보이는 막대의 높이와<br>
+                        실제 데이터(텍스트)를 비교해보세요.<br><br>
+                        <span class="highlight">차트를 클릭하면 진실이 드러납니다.</span>
+                    </p>
+                </div>
+                <div class="zone" style="grid-column: 2/3; grid-row: 1/5; background:#f9f9f9; align-items:center; cursor:pointer;" onclick="toggleChart()">
+                    <div class="chart-container wrong-state" id="interactiveChart">
+                        <div class="bar-group">
+                            <span class="bar-val">3</span>
+                            <div class="bar"></div>
+                            <span class="bar-label">A (3)</span>
+                        </div>
+                        <div class="bar-group">
+                            <span class="bar-val">5</span>
+                            <div class="bar"></div>
+                            <span class="bar-label">B (5)</span>
+                        </div>
+                        <div class="bar-group">
+                            <span class="bar-val">40</span>
+                            <div class="bar"></div>
+                            <span class="bar-label">C (40)</span>
+                        </div>
+                    </div>
+                    <p id="chartInstruction" style="margin-top:30px; font-weight:700; color:#888;">Click to Reveal Truth</p>
+                </div>
+             </div>
+        </div>
+
+        <div class="slide">
+            <div class="mondrian-grid">
+                <div class="zone block-blue" style="grid-column: 1/3; grid-row: 1/3;"></div>
+                <div class="zone" style="grid-column: 3/6; grid-row: 1/3; justify-content:center; padding-left:60px;">
+                    <h1>좋은 시각화란<br>보이지 않는 약속이다</h1>
+                </div>
+                <div class="zone" style="grid-column: 1/4; grid-row: 3/5; padding-left:140px;">
+                    <p class="desc">
+                        "디자이너는 데이터의 정확도를 희생하지 않고,<br>
+                        과학자는 미적 감각을 통해 메시지를 강화해야 합니다."
+                    </p>
+                    <div style="margin-top:40px; padding: 20px; background:#eee; display:inline-block; font-weight:700;">
+                        Next: 제2부, 그래프 디자인의 기본 원칙
+                    </div>
+                </div>
+                <div class="zone block-black" style="grid-column: 4/6; grid-row: 3/5;"></div>
+            </div>
+        </div>
+
+        <button class="btn-control btn-prev" id="btnPrev" onclick="prevSlide()" style="display:none;">←</button>
+        <button class="btn-control btn-next" id="btnNext" onclick="nextSlide()">→</button>
+    </div>
+
+    <script>
+        // Scaling Logic
+        const app = document.getElementById('app');
+        function resize() {
+            const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            app.style.transform = `scale(${scale})`;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Slide Logic
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.nav-dot');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+
+        function updateView() {
+            // Update Slides & Dots
+            slides.forEach((s, i) => {
+                s.classList.toggle('active', i === currentSlide);
+            });
+            dots.forEach((d, i) => {
+                d.classList.toggle('active', i === currentSlide);
+            });
+
+            // Update Buttons Visibility
+            // 1. Prev Button: Show only if index > 0
+            if (currentSlide > 0) {
+                btnPrev.style.display = 'flex';
+            } else {
+                btnPrev.style.display = 'none';
+            }
+
+            // 2. Next Button: Hide only if last slide
+            if (currentSlide === slides.length - 1) {
+                btnNext.style.display = 'none';
+            } else {
+                btnNext.style.display = 'flex';
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateView();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateView();
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateView();
+        }
+
+        // Interaction Logic (Toggle)
+        function toggleChart() {
+            const chart = document.getElementById('interactiveChart');
+            const text = document.getElementById('chartInstruction');
+            
+            // Toggle State
+            if (chart.classList.contains('correct-state')) {
+                // Return to Wrong
+                chart.classList.remove('correct-state');
+                chart.classList.add('wrong-state');
+                text.innerText = "Click to Reveal Truth";
+                text.style.color = "#888";
+            } else {
+                // Reveal Truth
+                chart.classList.remove('wrong-state');
+                chart.classList.add('correct-state');
+                text.innerText = "Click to Reset";
+                text.style.color = "#E84A43";
+            }
+        }
+
+        // Full Screen
+        function toggleFull() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if(document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>
