@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>데이터 시각화: 위치 스케일과 좌표계 (Centered)</title>
+    
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/white.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* === Global Settings === */
+        :root { 
+            --md-sys-color-primary: #3b82f6;
+            --md-sys-color-surface-variant: #f8f9fa;
+        }
+
+        body, .reveal, .reveal h1, .reveal h2, .reveal h3, .reveal p, .reveal li, button {
+            font-family: "Pretendard", sans-serif !important;
+            color: #1c1b1f;
+        }
+
+        /* 슬라이드 내부 스크롤 허용 및 패딩 최적화 */
+        .reveal .slides > section {
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0; /* 섹션 자체 패딩 제거 (컨테이너에서 제어) */
+            box-sizing: border-box;
+        }
+
+        /* === Layout Containers === */
+        .container { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 40px; 
+            text-align: left; 
+            
+            /* 높이 설정: 기본 100% */
+            height: 100%;
+            
+            width: 92%; 
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 0; /* 상하 여백 확보 */
+            box-sizing: border-box;
+        }
+        
+        .text-side { 
+            flex: 1; 
+            line-height: 1.6; 
+            min-width: 280px;
+            flex-shrink: 1; 
+        } 
+
+        .chart-side { 
+            flex: 1.2; 
+            background: var(--md-sys-color-surface-variant); 
+            padding: 20px; 
+            border-radius: 24px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative; 
+            width: 100%;
+            height: 50vh; 
+            overflow: visible; 
+        }
+        
+        /* Typography */
+        h1 { font-size: 3.2rem !important; font-weight: 800 !important; margin-bottom: 20px !important; }
+        h2 { font-size: 2.2rem !important; font-weight: 700 !important; margin-bottom: 20px !important; border-left: 8px solid var(--md-sys-color-primary); padding-left: 20px !important; }
+        p, li { font-size: 1.15rem !important; margin-bottom: 10px !important; }
+
+        .label-tag { 
+            font-size: 0.9rem !important; 
+            padding: 6px 12px; 
+            background: #333; 
+            color: #fff; 
+            border-radius: 8px; 
+            margin-bottom: 16px; 
+            display: inline-block; 
+        }
+
+        /* Insight Cards Grid */
+        .insight-grid {
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 24px; 
+            margin-top: 40px;
+            width: 100%;
+        }
+        .insight-card {
+            padding: 24px; 
+            border-radius: 16px;
+            text-align: left;
+        }
+
+        /* Navigation Bar */
+        .custom-nav {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 24px;
+            border-radius: 100px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .nav-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #444;
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+        .nav-btn:hover { background: #f0f0f0; color: var(--md-sys-color-primary); }
+        .page-indicator { font-size: 14px; font-weight: 600; color: #555; min-width: 40px; text-align: center; }
+
+        /* =========================================
+           MD3 Responsive Breakpoints
+           ========================================= */
+
+        /* Medium (Tablets) : < 840px */
+        @media (max-width: 840px) {
+            .container {
+                flex-direction: column; 
+                
+                /* [수정] 세로 중앙 정렬 적용 */
+                justify-content: center; 
+                
+                /* [수정] 중앙 정렬 시 내용이 넘칠 경우를 대비해 min-height 사용 */
+                height: auto;
+                min-height: 100%;
+                
+                gap: 20px; 
+                width: 90%;
+                padding-top: 0; /* 상단 강제 여백 제거 */
+            }
+            .text-side {
+                width: 100%;
+                text-align: center;
+                flex: none;
+                /* 중앙 정렬 시 텍스트가 너무 위아래로 퍼지지 않게 마진 조정 */
+                margin-bottom: 0; 
+            }
+            .chart-side {
+                width: 100%;
+                height: 40vh;
+                flex: none;
+                padding: 10px; 
+            }
+            h2 {
+                border-left: none;
+                border-bottom: 4px solid var(--md-sys-color-primary);
+                padding-left: 0 !important;
+                padding-bottom: 10px !important;
+                display: inline-block;
+                margin-bottom: 15px !important;
+            }
+            .insight-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Compact (Phones) : < 600px */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem !important; }
+            h2 { font-size: 1.5rem !important; }
+            p, li { font-size: 1rem !important; }
+            
+            .chart-side {
+                height: 35vh; 
+            }
+            .insight-grid {
+                grid-template-columns: 1fr;
+            }
+            .custom-nav {
+                bottom: 16px;
+                padding: 6px 16px;
+                width: 85%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <section data-background="linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)">
+                <div class="container" style="flex-direction: column; justify-content: center; text-align: center;">
+                    <h1 style="color: #333;">위치 스케일:<br>좌표와 축</h1>
+                    <p style="color: #555">클라우스 윌케 <데이터 시각화 교과서> 3장 정리</p>
+                    <p style="color: #888; font-size: 0.8rem !important; margin-top: 40px !important;">Product Designer Study | Responsive Center</p>
+                </div>
+            </section>
+
+            <section>
+                <div class="container">
+                    <div class="text-side">
+                        <span class="label-tag">개요</span>
+                        <h2>좌표계란 무엇인가?</h2>
+                        <p>데이터 시각화의 핵심은 데이터를 <b>위치(Position)</b>로 변환하는 것입니다.</p>
+                        <ul>
+                            <li>데이터 값 → 화면상의 좌표(x, y)</li>
+                            <li>위치 스케일은 가장 강력한 시각적 채널</li>
+                            <li>좌표계는 이 위치를 결정하는 "규칙"</li>
+                        </ul>
+                    </div>
+                    <div class="chart-side">
+                        <div style="text-align: center;">
+                            <p style="color:#666; font-size: 0.9em; margin-bottom: 20px;">디자이너가 만나는 첫 번째 좌표계:<br><b>지도(WGS84)</b></p>
+                            <div style="font-size: 4rem;">📍</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div class="container">
+                    <div class="text-side">
+                        <span class="label-tag">Standard</span>
+                        <h2>데카르트 좌표계</h2>
+                        <p>두 축이 90도로 만나는 가장 표준적인 시스템입니다.</p>
+                        <ul>
+                            <li><b>특징:</b> 축 간의 직교성, 일정한 단위 간격</li>
+                            <li><b>사례:</b> 주식 차트, 사용자 활동 대시보드</li>
+                        </ul>
+                    </div>
+                    <div class="chart-side">
+                        <canvas id="cartesianChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div class="container">
+                    <div class="text-side">
+                        <span class="label-tag">Non-linear</span>
+                        <h2>로그 스케일 (Log)</h2>
+                        <p>값의 범위가 극단적일 때 사용합니다.</p>
+                        <ul>
+                            <li><b>핵심:</b> "차이"보다 "비율"이 중요할 때</li>
+                            <li><b>사례:</b> 전염병 확산, 유저 성장률</li>
+                        </ul>
+                        <div style="margin-top: 20px;">
+                            <button onclick="toggleLog(false)" style="padding:10px 20px; background:#3b82f6; color:white; border:none; border-radius:8px; cursor:pointer;">Linear</button>
+                            <button onclick="toggleLog(true)" style="padding:10px 20px; background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">Log</button>
+                        </div>
+                    </div>
+                    <div class="chart-side">
+                        <canvas id="logChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div class="container">
+                    <div class="text-side">
+                        <span class="label-tag">Curved</span>
+                        <h2>극 좌표계 (Polar)</h2>
+                        <p>각도와 반지름을 사용하는 좌표계입니다.</p>
+                        <ul>
+                            <li><b>특징:</b> 데이터의 주기성(주기/순환) 표현</li>
+                            <li><b>사례:</b> 스마트워치 활동 링, 24시간 접속자</li>
+                        </ul>
+                    </div>
+                    <div class="chart-side">
+                        <canvas id="polarChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div class="container" style="flex-direction: column; justify-content: center;">
+                    <h2>Designer's Insight</h2>
+                    <div class="insight-grid">
+                        <div class="insight-card" style="background: #e0f2fe;">
+                            <h4>데카르트</h4>
+                            <p>절대적 차이 비교에 유리</p>
+                        </div>
+                        <div class="insight-card" style="background: #fef3c7;">
+                            <h4>로그/제곱근</h4>
+                            <p>성장률 및 면적 보정</p>
+                        </div>
+                        <div class="insight-card" style="background: #dcfce7;">
+                            <h4>극 좌표</h4>
+                            <p>주기성과 순환성 표현</p>
+                        </div>
+                    </div>
+                    <p style="margin-top: 40px; font-weight: bold; color: #555;">"데이터의 본질에 맞는 좌표계를 선택하세요."</p>
+                </div>
+            </section>
+
+        </div>
+        
+        <div class="custom-nav">
+            <button class="nav-btn" onclick="Reveal.prev()">◀</button>
+            <div class="page-indicator" id="pageIndicator">1 / 6</div>
+            <button class="nav-btn" onclick="Reveal.next()">▶</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            center: true,
+            transition: 'slide',
+            controls: false, 
+            slideNumber: false,
+            // 반응형 레이아웃을 위해 스케일링 비활성화
+            width: "100%",
+            height: "100%",
+            margin: 0,
+            minScale: 1,
+            maxScale: 1,
+            disableLayout: false 
+        });
+
+        Reveal.on('slidechanged', event => {
+            const index = event.indexh + 1;
+            const total = Reveal.getTotalSlides();
+            document.getElementById('pageIndicator').innerText = `${index} / ${total}`;
+        });
+        document.getElementById('pageIndicator').innerText = `1 / ${Reveal.getTotalSlides()}`;
+
+        // 차트 설정
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: { top: 20, bottom: 20, left: 10, right: 10 }
+            },
+            plugins: { 
+                legend: { 
+                    position: 'bottom',
+                    labels: { padding: 20, usePointStyle: true }
+                } 
+            }
+        };
+
+        // 1. Cartesian
+        new Chart(document.getElementById('cartesianChart'), {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{ label: 'Users', data: [12, 19, 15, 17, 22, 30, 25], borderColor: '#3b82f6', tension: 0.4 }]
+            },
+            options: commonChartOptions
+        });
+
+        // 2. Log
+        const logCtx = document.getElementById('logChart').getContext('2d');
+        let logChart = new Chart(logCtx, {
+            type: 'line',
+            data: {
+                labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6'],
+                datasets: [{ label: 'Growth', data: [10, 100, 1000, 10000, 100000, 1000000], borderColor: '#ef4444' }]
+            },
+            options: { 
+                ...commonChartOptions,
+                scales: { y: { type: 'linear' } }
+            }
+        });
+
+        function toggleLog(isLog) {
+            logChart.options.scales.y.type = isLog ? 'logarithmic' : 'linear';
+            logChart.update();
+        }
+
+        // 3. Polar
+        new Chart(document.getElementById('polarChart'), {
+            type: 'polarArea',
+            data: {
+                labels: ['운동', '수면', '업무', '휴식', '식사'],
+                datasets: [{ data: [11, 16, 14, 10, 12], backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }]
+            },
+            options: commonChartOptions
+        });
+    </script>
+</body>
+</html>
