@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터 시각화 교과서 - 프레젠테이션 배포</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F5F5DC; /* 라이트 베이지 */
+            --accent-color: #FF5F1F; /* 뉴트로 오렌지 */
+            --dark-color: #2D2D2D; /* 진한 차콜 */
+            --border-width: 3px;
+        }
 
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--dark-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            padding: 40px;
+            background: white;
+            border: var(--border-width) solid var(--dark-color);
+            box-shadow: 10px 10px 0px var(--dark-color); /* 뉴트로 특유의 딱딱한 그림자 */
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+            border-bottom: var(--border-width) solid var(--dark-color);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+
+        .intro {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            word-break: keep-all;
+        }
+
+        .presentation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            padding: 20px;
+            border: var(--border-width) solid var(--dark-color);
+            transition: transform 0.2s;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            border: 2px solid var(--dark-color);
+            box-shadow: 4px 4px 0px var(--dark-color);
+            transition: all 0.1s;
+        }
+
+        .btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px var(--dark-color);
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>반갑습니다! 👋</h1>
+    
+    <div class="intro">
+        본 페이지는 도서 <strong>[데이터 시각화 교과서]</strong>의 주요 내용을 정리한 <br>
+        웹 프레젠테이션을 공유하기 위해 제작되었습니다. <br>
+        아래의 링크를 통해 발표 자료를 확인하실 수 있습니다.
+    </div>
+
+    <div class="presentation-list">
+        <div class="card">
+            <h3>1장 [이 책의 내용과 구성] ~ [이 책의 예시 그래프를 이해하는 법]</h3>
+            <a href="https://aileenpark.github.io/data-viz-presentation/intro" class="btn">발표 자료 보기</a>
+        </div>
+
+        <div class="card">
+            <h3>3장 전체 정리 + 사례 보충</h3>
+            <a href="https://aileenpark.github.io/data-viz-presentation/ch3" class="btn">발표 자료 보기</a>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2024 Data Visualization Textbook. Built with Retro Style.
+    </footer>
+</div>
+
+</body>
+</html>
